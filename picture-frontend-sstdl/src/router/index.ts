@@ -2,8 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import HomePage from '@/pages/HomePage.vue'
 import UserLoginPage from '@/pages/user/UserLoginPage.vue'
 import UserRegisterPage from '@/pages/user/UserRegisterPage.vue'
-import { HomeOutlined } from '@ant-design/icons-vue'
-import { h } from 'vue'
+import UserManagePage from '@/pages/admin/UserManagePage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,21 +10,23 @@ const router = createRouter({
     {
       path: '/',
       name: '主页',
-      component: HomePage
+      component: HomePage,
     },
     {
       path: '/user/login',
-      name: '登录',
-      component: UserLoginPage
+      name: '用户登录',
+      component: UserLoginPage,
     },
     {
       path: '/user/register',
       name: '用户注册',
       component: UserRegisterPage,
-      meta: {
-        show: false,
-      }
-    }
+    },
+    {
+      path: '/admin/userManage',
+      name: '用户管理',
+      component: UserManagePage,
+    },
   ],
 })
 

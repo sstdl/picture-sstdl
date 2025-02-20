@@ -14,6 +14,7 @@ import com.sstdl.picturebackend.model.enums.UserRoleEnum;
 import com.sstdl.picturebackend.model.vo.LoginUserVO;
 import com.sstdl.picturebackend.model.vo.UserVO;
 import com.sstdl.picturebackend.service.UserService;
+import com.sstdl.picturebackend.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -177,8 +178,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         queryWrapper.like(StrUtil.isNotBlank(userAccount), "userAccount", userAccount);
         queryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
         queryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
-        queryWrapper.orderBy(StrUtil.isNotEmpty(sortField), sortOrder.equals("ascend"), sortField);
+        queryWrapper.orderBy(SqlUtils.validSortField(sortField), sortOrder.equals("ascend"), sortField);
         return queryWrapper;
+    }
+
+    @Override
+    public boolean isAdmin(User user) {
+        return user != null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
     }
 
     @Override

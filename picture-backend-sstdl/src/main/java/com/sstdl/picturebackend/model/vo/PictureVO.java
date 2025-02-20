@@ -1,6 +1,7 @@
 package com.sstdl.picturebackend.model.vo;
 
 import cn.hutool.json.JSONUtil;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.sstdl.picturebackend.model.entity.Picture;
 import lombok.Data;
 import org.springframework.beans.BeanUtils;
@@ -74,17 +75,20 @@ public class PictureVO implements Serializable {
   
     /**  
      * 创建时间  
-     */  
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date createTime;
   
     /**  
      * 编辑时间  
-     */  
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date editTime;  
   
     /**  
      * 更新时间  
-     */  
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date updateTime;  
   
     /**  

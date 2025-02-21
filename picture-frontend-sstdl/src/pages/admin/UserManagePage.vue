@@ -86,7 +86,7 @@ const total = ref(0)
 
 // 定义查询条件
 const searchParams = reactive<API.UserQueryRequest>({
-  currentPage: 1,
+  current: 1,
   pageSize: 10,
   sortField: 'createTime',
   sortOrder: 'ascend',
@@ -95,7 +95,7 @@ const searchParams = reactive<API.UserQueryRequest>({
 // 定义分页器
 const pagination = computed(() => ({
   total: total.value,
-  currentPage: searchParams.currentPage ?? 1,
+  current: searchParams.current ?? 1,
   pageSize: searchParams.pageSize ?? 10,
   showSizeChanger: true,
   showQuickJumper: true,
@@ -115,14 +115,14 @@ const fetchData = async () => {
 }
 // 改变页面展示数量
 const doTableChange = (page: any) => {
-  searchParams.currentPage = page.currentPage
+  searchParams.current = page.current
   searchParams.pageSize = page.pageSize
   fetchData()
 }
 // 获取数据
 const doSearch = () => {
   // 重置页码
-  searchParams.currentPage = 1
+  searchParams.current = 1
   fetchData()
 }
 

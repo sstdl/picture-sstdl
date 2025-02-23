@@ -31,12 +31,12 @@ public abstract class PictureUploadTemplate {
     protected CosClientConfig cosClientConfig;
 
     public final UploadPictureResult uploadPicture(Object inputSource, String uploadFilePrefix) {
-        // 校验图片
-        validPicture(inputSource);
+        // 校验图片 （使用缩略图获取不到后缀名时，使用校验返回的后缀名）
+        String suffix = validPicture(inputSource);
         // 构建图片上传地址
         String uuid = RandomUtil.randomString(16);
         String originalFilename = getOriginFilename(inputSource);
-        String uploadFileName = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid, FileUtil.getSuffix(originalFilename));
+        String uploadFileName = String.format("%s_%s.%s", DateUtil.formatDate(new Date()), uuid, suffix);
         String uploadFilePath = String.format("/%s/%s", uploadFilePrefix, uploadFileName);
         // 上传图片
         File tempFile = null;
@@ -61,7 +61,7 @@ public abstract class PictureUploadTemplate {
     /**
      * 校验输入源（本地文件或 URL）
      */
-    protected abstract void validPicture(Object inputSource);
+    protected abstract String validPicture(Object inputSource);
 
     /**
      * 获取输入源的原始文件名
@@ -94,6 +94,5 @@ public abstract class PictureUploadTemplate {
         }
         boolean delete = file.delete();
         ThrowUtils.throwIf(!delete, ErrorCode.SYSTEM_ERROR, "删除文件失败");
-        log.info("删除文件失败：{}", file.getAbsoluteFile());
     }
 }

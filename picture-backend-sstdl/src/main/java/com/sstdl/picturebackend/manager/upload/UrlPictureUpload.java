@@ -27,7 +27,7 @@ import java.util.List;
 @Slf4j
 public class UrlPictureUpload extends PictureUploadTemplate{
     @Override
-    protected void validPicture(Object inputSource) {
+    protected String validPicture(Object inputSource) {
         String fileUrl = (String) inputSource;
         ThrowUtils.throwIf(StringUtils.isBlank(fileUrl), ErrorCode.PARAMS_ERROR, "上传文件不能为空");
         try {
@@ -41,13 +41,14 @@ public class UrlPictureUpload extends PictureUploadTemplate{
         ThrowUtils.throwIf(!(fileUrl.startsWith("http://") || fileUrl.startsWith("https://")),
                 ErrorCode.PARAMS_ERROR, "仅支持 HTTP 或 HTTPS 协议的文件地址");
         HttpResponse response = null;
+        String contentType = null;
         try {
             response = HttpUtil.createRequest(Method.HEAD, fileUrl).execute();
             if (response.getStatus() != HttpStatus.HTTP_OK) {
-                return;
+                return "文件地址无效";
             }
             // 4. 校验文件类型
-            String contentType = response.header("Content-Type");
+            contentType = response.header("Content-Type");
             final List<String> suffixList = Arrays.asList("image/jpeg", "image/png", "image/gif", "image/webp", "image/jpg");
             ThrowUtils.throwIf(!suffixList.contains(contentType), ErrorCode.PARAMS_ERROR, "上传文件格式不正确");
             // 5. 校验文件大小
@@ -62,12 +63,13 @@ public class UrlPictureUpload extends PictureUploadTemplate{
                 response.close();
             }
         }
+        return contentType.substring(contentType.lastIndexOf("/") + 1);
     }
 
     @Override
     protected String getOriginFilename(Object inputSource) {
         String fileUrl = (String) inputSource;
-        return FileUtil.mainName(fileUrl);
+        return FileUtil.getName(fileUrl);
     }
 
     @Override

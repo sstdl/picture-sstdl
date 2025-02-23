@@ -21,7 +21,7 @@ import java.util.List;
 public class FilePictureUpload extends PictureUploadTemplate{
 
     @Override
-    protected void validPicture(Object inputSource) {
+    protected String validPicture(Object inputSource) {
         MultipartFile multipartFile = (MultipartFile) inputSource;
         ThrowUtils.throwIf(multipartFile == null, ErrorCode.PARAMS_ERROR, "上传文件不能为空");
         // 文件大小限制
@@ -30,8 +30,9 @@ public class FilePictureUpload extends PictureUploadTemplate{
         ThrowUtils.throwIf(fileSize > MAX_FILE_SIZE, ErrorCode.PARAMS_ERROR, "上传文件大小不能超过2M");
         // 校验后缀
         String suffix = FileUtil.getSuffix(multipartFile.getOriginalFilename());
-        List<String> suffixList = Arrays.asList("jpg", "jpeg", "png", "gif");
+        List<String> suffixList = Arrays.asList("jpg", "jpeg", "png", "gif", "webp");
         ThrowUtils.throwIf(!suffixList.contains(suffix), ErrorCode.PARAMS_ERROR, "上传文件格式不正确");
+        return suffix;
     }
 
     @Override

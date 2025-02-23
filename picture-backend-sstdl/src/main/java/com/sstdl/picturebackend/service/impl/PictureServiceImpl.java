@@ -3,6 +3,7 @@ package com.sstdl.picturebackend.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -15,6 +16,7 @@ import com.sstdl.picturebackend.mapper.PictureMapper;
 import com.sstdl.picturebackend.model.dto.file.UploadPictureResult;
 import com.sstdl.picturebackend.model.dto.picture.PictureQueryRequest;
 import com.sstdl.picturebackend.model.dto.picture.PictureReviewRequest;
+import com.sstdl.picturebackend.model.dto.picture.PictureUploadByBatchRequest;
 import com.sstdl.picturebackend.model.dto.picture.PictureUploadRequest;
 import com.sstdl.picturebackend.model.entity.Picture;
 import com.sstdl.picturebackend.model.entity.User;
@@ -25,12 +27,17 @@ import com.sstdl.picturebackend.service.PictureService;
 import com.sstdl.picturebackend.service.UserService;
 import com.sstdl.picturebackend.utils.SqlUtils;
 import com.sstdl.picturebackend.utils.ThrowUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +50,7 @@ import java.util.stream.Collectors;
 * @createDate 2025-02-19 21:16:45
 */
 @Service
+@Slf4j
 public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     implements PictureService {
 
@@ -53,12 +61,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private FilePictureUpload filePictureUpload;
 
     @Resource
-    private UrlPictureUpload uploadPicture;
+    private UrlPictureUpload urlPictureUpload;
 
     @Resource
     private UserService userService;
-    @Autowired
-    private UrlPictureUpload urlPictureUpload;
 
     @Override
     public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
@@ -252,9 +258,58 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
     }
 
+    @Override
+    public Integer uploadPictureByBatch(PictureUploadByBatchRequest byBatchRequest, User loginUser) {
+        String searchText = byBatchRequest.getSearchText();
+        Integer count = byBatchRequest.getCount();
+        String namePrefix = byBatchRequest.getNamePrefix();
+        ThrowUtils.throwIf(count >= 30, ErrorCode.SYSTEM_ERROR, "最多30张图片");
+        // 设置爬取链接
+        String fetchUrl = String.format("https://cn.bing.com/images/async?q=%s&mmasync=1", searchText);
+        log.info("爬取链接: {}", fetchUrl);
+        Document document;
+        try {
+            document = Jsoup.connect(fetchUrl).get();
+        } catch (IOException e) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "爬取图片失败");
+        }
 
+        Element element = document.getElementsByClass("dgControl").first();
+        ThrowUtils.throwIf(element == null, ErrorCode.SYSTEM_ERROR, "爬取图片失败");
+        // 抓取缩略图
+//        Elements elements = element.select("img.mimg");
+        // 抓取高清图
+        Elements elements = element.select(".iusc");
+        Integer uploadCount = 0;
+        for (Element e : elements) {
+            // 缩略图
+//            String fileUrl = e.attr("src");
+
+            // 高清图
+            String data_m = e.attr("m");
+            String fileUrl = JSONUtil.parseObj(data_m).getStr("murl");
+            log.info("图片链接: {}", fileUrl);
+            if (StrUtil.isBlank(fileUrl)) {
+                log.info("图片链接为空，已跳过：{}", fileUrl);
+                continue;
+            }
+            // 截取链接 "?" 前面的部分
+//            fileUrl = fileUrl.substring(0, fileUrl.indexOf("?"));
+            PictureUploadRequest pictureUploadRequest = new PictureUploadRequest();
+            pictureUploadRequest.setFileUrl(fileUrl);
+            pictureUploadRequest.setPictureName(namePrefix + uploadCount);
+            try {
+                PictureVO pictureVO = this.uploadPicture(fileUrl, pictureUploadRequest, loginUser);
+                log.info("爬取图片成功: {}", pictureVO.getId());
+                uploadCount++;
+            } catch (Exception ex) {
+                log.error("上传失败", ex);
+                continue;
+            }
+            if (uploadCount >= count) {
+                break;
+            }
+        }
+        return uploadCount;
+    }
 }
-
-
-
-

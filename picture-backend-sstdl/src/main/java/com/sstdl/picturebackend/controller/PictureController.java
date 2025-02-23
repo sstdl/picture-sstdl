@@ -75,6 +75,18 @@ public class PictureController {
     }
 
     /**
+     * 批量上传图片
+     */
+    @PostMapping("/upload/batch")
+    @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    public BaseResponse<Integer> uploadPictureByBatch(@RequestBody PictureUploadByBatchRequest byBatchRequest, HttpServletRequest request) {
+        ThrowUtils.throwIf(byBatchRequest == null, ErrorCode.PARAMS_ERROR, "参数为空");
+        User loginUser = userService.getLoginUser(request);
+        Integer res = pictureService.uploadPictureByBatch(byBatchRequest, loginUser);
+        return ResultUtils.success(res);
+    }
+
+    /**
      * 删除图片
      */
     @PostMapping("/delete")
